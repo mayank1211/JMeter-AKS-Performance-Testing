@@ -1,0 +1,106 @@
+# To be improved and changed - (Old Copy)
+
+trigger: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+parameters:
+  - name: Org
+    displayName: "Full org Azure Devops Url"
+    type: string
+    default: "https://dev.azure.com/org"
+  - name: ProjectName
+    displayName: "The name of your project within the Azure Devops"
+    type: string
+    default: null
+  - name: Repository
+    displayName: "Name of your project repository within the Azure Devops"
+    type: string
+    default: null
+  - name: CiPipelineName
+    displayName: "Build pipeline name (Defaults to performancetesting-CI)"
+    type: string
+    default: "performancetesting-CI"
+  - name: PipelineDescription
+    displayName: "Description of the pipeline"
+    type: string
+    default: "Performance testing pipeline used to run test within kubernetes cluster with self-hosted agents"
+  - name: GitCommitMessage
+    displayName: "Initial git commit message when pushing the branch performance-testing to your repository"
+    type: string
+    default: "Add files required for performance testing build pipeline"
+
+
+
+steps:
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: |
+      export AZURE_DEVOPS_EXT_PAT=$(PatToken)
+
+      git config --global user.name "Mayank Patel" 
+      git config --global user.email "mayankkumar.patel1211@gmail.com"
+
+      git clone https://$(PatToken)@dev.azure.com/org/${{ parameters.ProjectName }}/_git/${{ parameters.Repository }}
+      git rm --cached ${{ parameters.ProjectName }}
+      
+      cd ${{ parameters.ProjectName }} && git checkout -b performance-testing
+      cp ../performance-testing.yml performance-testing.yml
+      cp -r ../PerformanceTests/ .
+
+      git add .
+      git commit -m "Import performance testing configuration yaml file"
+      git push --set-upstream origin performance-testing
+
+      az pipelines create \
+        --name "${{ parameters.CiPipelineName }}" \
+        --description "${{ parameters.PipelineDescription }}" \
+        --organization "${{ parameters.Org }}" --project "${{ parameters.ProjectName }}" \
+        --repository "${{ parameters.Repository }}" --repository-type tfsgit \
+        --branch "performance-testing" --yml-path performance-testing.yml
+
+      az repos pr create \
+        --description "${{ parameters.GitCommitMessage }}" \
+        --merge-commit-message "${{ parameters.GitCommitMessage }}" \
+        --detect true \
+        --draft false \
+        --project "${{ parameters.ProjectName }}" \
+        --repository "${{ parameters.Repository }}" \
+        --title "Performance Testing Configuration"
+  displayName: 'Import Build Pipeline'
+
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: |
+      export AZURE_DEVOPS_EXT_PAT=$(PatToken)
+
+      az pipelines variable create --name "ContainerRegistryUser" \
+      --organization ${{ parameters.Org }} \
+      --project ${{ parameters.ProjectName }} \
+      --pipeline-name ${{ parameters.CiPipelineName }} \
+      --allow-override false \
+      --detect true \
+      --secret false \
+      --value $(ContainerRegistryUser)
+
+      az pipelines variable create --name "ContainerRegistryPassword" \
+      --organization ${{ parameters.Org }} \
+      --project ${{ parameters.ProjectName }} \
+      --pipeline-name ${{ parameters.CiPipelineName }} \
+      --allow-override false \
+      --detect true \
+      --secret true \
+      --value $(ContainerRegistryPassword)
+  
+      az pipelines variable create --name "AppInsightsConnectionString" \
+      --organization ${{ parameters.Org }} \
+      --project ${{ parameters.ProjectName }} \
+      --pipeline-name ${{ parameters.CiPipelineName }} \
+      --allow-override false \
+      --detect true \
+      --secret true \
+      --value $(AppInsightsConnectionString)
+  displayName: 'Assign Pipeline Variables'

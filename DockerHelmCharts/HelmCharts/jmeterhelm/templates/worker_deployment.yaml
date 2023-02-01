@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jmeter-workers
+  labels:
+    jmeter_mode: worker
+spec:
+  replicas: {{ .Values.workerReplicaCount }}
+  selector:
+    matchLabels:
+      jmeter_mode: worker
+  template:
+    metadata:
+      labels:
+        jmeter_mode: worker
+    spec:
+      containers:
+      - name: jmworker
+        image: {{ .Values.jmeterWorkersImage }} 
+        imagePullPolicy: {{ .Values.pullPolicy }}
+        ports:
+        - containerPort: 1099
+        - containerPort: 50000
+        resources:
+          requests:
+            cpu: {{ .Values.resources.requests.cpu }} 
+            memory: {{ .Values.resources.requests.memory }} 
+        # env:
+        # - name: JAVA_OPTS
+        #   value: "-Xms6000m -Xmx8000m"

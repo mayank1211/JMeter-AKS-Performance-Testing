@@ -1,0 +1,13 @@
+# Default values for helm.
+# All resource parameters can be changed through helm arguments in pipeline.
+
+jmeterMainImage: mayank1211/jmeter-main:5.5
+jmeterWorkersImage: mayank1211/jmeter-worker:5.5
+pullPolicy: Always
+
+workerReplicaCount: 1
+
+resources:
+  requests:
+    cpu: 1
+    memory: 4

@@ -1,0 +1,49 @@
+trigger: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+parameters:
+  - name: AgentWorkers
+    displayName: "Amount of agents to deploy"
+    type: number
+    default: 5
+
+variables:
+- name: AZURE_ORG_URL
+  value: "https://dev.azure.com/org/"
+- name: AZURE_AGENT_NAME
+  value: "Agents Pool AKS"
+# AZURE_PAT_TOKEN: assigned in through the pipeline variables
+
+steps:
+# # Fetch Azure agent helm chart - only needed if helm chart is hosted in azure container registry
+# - script: |
+#     export HELM_EXPERIMENTAL_OCI=1
+
+#     # Authenticate with Container Registry
+#     helm registry login performancetesting.azurecr.io \
+#       --username $(ContainerRegistryUser) --password $(ContainerRegistryPassword)
+      
+#     # Download Azure Agent helm chart from azure container registry
+#     helm pull oci://performancetesting.azurecr.io/azure-agent/helm --version 1.0.0 --untar
+#   displayName: 'Fetch Helm chart'
+
+# Create and Deploy azure self-hosted agents to the dev cluster
+- task: HelmDeploy@0
+  displayName: 'helm deploy'
+  inputs:
+    connectionType: 'Kubernetes Service Connection'
+    kubernetesServiceConnection: $(KubernetesServiceEndpoint)
+    namespace: 'azure-agents'
+    releaseName: 'azure-agents'
+    command: upgrade
+    chartType: FilePath
+    chartPath: helm
+    chartName: 'azure-agents'
+    arguments: >-
+      --create-namespace
+      --set replicaCount="${{ parameters.AgentWorkers }}"
+      --set Azure_Org_Url="$(AZURE_ORG_URL)"
+      --set Azure_PAT_Token="$(AZURE_PAT_TOKEN)"
+      --set Azure_Agent_Name="$(AZURE_AGENT_NAME)"

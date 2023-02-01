@@ -1,0 +1,5 @@
+# Default values for helm.
+resources:
+  requests:
+    cpu: 1
+    memory: 4

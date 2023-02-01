@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-azure-agent-deploy
+  labels:
+    app: azdevops-agent
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: azdevops-agent
+  template:
+    metadata:
+      labels:
+        app: azdevops-agent
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
+    spec:
+      containers:
+      - name: azureagent
+        image: {{ .Values.image }}
+        resources:
+          requests:
+            cpu: {{ .Values.resources.requests.cpu }} 
+            memory: {{ .Values.resources.requests.memory }}
+          limits:
+            cpu: {{ .Values.resources.limits.cpu }} 
+            memory: {{ .Values.resources.limits.memory }}
+        env:
+          - name: AZP_TOKEN
+            value: {{ .Values.Azure_PAT_Token }}
+          - name: AZP_URL
+            value: {{ .Values.Azure_Org_Url }}
+          - name: AZP_POOL
+            value: {{ .Values.Azure_Agent_Name }}
+        volumeMounts:
+        - mountPath: /var/run/docker.sock
+          name: docker-volume
+      volumes:
+      - name: docker-volume
+        hostPath:
+          path: /var/run/docker.sock

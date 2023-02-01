@@ -1,0 +1,26 @@
+# Default agent deployment replica
+replicaCount: 1
+
+# Azure agent docker image
+image: mayank1211/azure-ubuntu:latest
+pullPolicy: Always
+
+# Limit agents to specific resource usage/allocation
+resources:
+  limits:
+    cpu: 1
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 1
+
+# # Auto-scaling azure agents as required
+# autoscaling:
+#   minReplicas: 3
+#   maxReplicas: 10
+#   targetUtilizationPercentage: 90
+
+# Azure configurations
+Azure_PAT_Token: ""
+Azure_Org_Url: "https://dev.azure.com/org"
+Azure_Agent_Name: "Ubuntu Self-Hosteed Agent Pool - AKS"

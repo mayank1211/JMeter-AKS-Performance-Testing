@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jmeter-influxdb
+  namespace: jmeter-reporting
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jmeter-influxdb
+  template:
+    metadata:
+      labels:
+        app: jmeter-influxdb
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "false"
+    spec:
+      containers:
+      - name: influxdb-deploy
+        image: influxdb:1.7.11
+        imagePullPolicy: Always
+        resources:
+          requests:
+            cpu: {{ .Values.resources.requests.cpu }}
+            memory: {{ .Values.resources.requests.memory }}
+        volumeMounts:
+          - name: config-volume
+            mountPath: /etc/Influxdb
+          - name: influx-volume
+            mountPath: /var/lib/influxdb
+        securityContext:
+          allowPrivilegeEscalation: true
+        ports:
+          - containerPort: 8086
+            name: api
+          - containerPort: 8083
+            name: http
+          - containerPort: 2003
+            name: graphite
+        env:
+        - name: INFLUXDB_ADMIN_USER
+          value: "jmeter"
+        - name: INFLUXDB_ADMIN_USER_PASSWORD
+          value: "jmeter"
+      volumes:
+      - name: config-volume
+        configMap:
+         name: jmeter-influxdb-config
+      - name: influx-volume
+        persistentVolumeClaim:
+          claimName: azure-influx-disk

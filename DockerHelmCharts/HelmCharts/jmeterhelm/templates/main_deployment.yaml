@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jmeter-main
+  labels:
+    jmeter_mode: main
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      jmeter_mode: main
+  template:
+    metadata:
+      labels:
+        jmeter_mode: main
+    spec:
+      containers:
+      - name: jmmain
+        image: {{ .Values.jmeterMainImage }} 
+        imagePullPolicy: {{ .Values.pullPolicy }}
+        command: [ "/bin/bash", "-c", "--" ]
+        args: [ "while true; do sleep 30; done;" ]
+        resources:
+          requests:
+            cpu: {{ .Values.resources.requests.cpu }} 
+            memory: {{ .Values.resources.requests.memory }} 
+        # env:
+        # - name: JAVA_OPTS
+        #   value: "-Xms6000m -Xmx8000m"
+        volumeMounts:
+          - name: loadtest
+            mountPath: /load_test
+            subPath: "load_test"
+        ports:
+        - containerPort: 60000
+      volumes:
+      - name: loadtest 
+        configMap:
+         name: jmeter-load-test

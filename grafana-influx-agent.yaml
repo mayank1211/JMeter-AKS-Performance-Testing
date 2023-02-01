@@ -1,0 +1,30 @@
+trigger: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+# # Fetch Azure agent helm chart - only needed if helm chart is hosted in azure container registry
+# - script: |
+#     export HELM_EXPERIMENTAL_OCI=1
+
+#     # Authenticate with Container Registry
+#     helm registry login performancetesting.azurecr.io \
+#       --username $(ContainerRegistryUser) --password $(ContainerRegistryPassword)
+      
+#     # Download Azure Agent helm chart from azure container registry
+#     helm pull oci://performancetesting.azurecr.io/influxgrafana/influxgrafana --version 1.0.0 --untar
+#   displayName: 'Fetch Helm chart'
+
+# Create and Deploy azure self-hosted agents to the dev cluster
+- task: HelmDeploy@0
+  inputs:
+    connectionType: 'Kubernetes Service Connection'
+    kubernetesServiceConnection: $(KubernetesServiceEndpoint)
+    namespace: 'jmeter-reporting'
+    command: 'upgrade'
+    chartType: 'FilePath'
+    chartPath: 'influxgrafana'
+    chartName: 'influxgrafana'
+    releaseName: 'influxgrafana'
+    arguments: '--create-namespace'

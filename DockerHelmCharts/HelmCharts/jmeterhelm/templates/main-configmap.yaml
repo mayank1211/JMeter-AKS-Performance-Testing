@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jmeter-load-test
+  labels:
+    app: main-config
+data:
+  load_test: |
+    #!/bin/bash
+    : '
+      ===============================================================================================
+      ||            Script invokes jmeter test script with the workers POD IP addresses            ||
+      ||       Script should be run like: ./load_test "path to the test script in jmx format"      ||
+      ||   HTML dashbord is created at the end of the run and can be seen in azure build pipeline  ||
+      ===============================================================================================
+    '
+    # Start jmeter test run 
+    # -X means exit the servers at the end of test - https://jmeter.apache.org/usermanual/get-started.html
+
+    testStartTime=$(date +"%T")
+
+    /opt/apache-jmeter-5.5/bin/jmeter.sh -n -t $1 -l results.csv -e -o /results/ \
+      -GcustomConfig.properties -Dserver.rmi.ssl.disable=true -X \
+      -R `getent ahostsv4 jmeter-workers-svc | cut -d' ' -f1 | sort -u | awk -v ORS=, '{print $1}' | sed 's/,$//'`
+
+    if [ ! -z "${BLOB_ACCOUNT_NAME}" ] && [ ! -z "${BLOB_KEY}"] && [ ! -z "${BLOB_CONTAINER_NAME}"]; then
+      echo "${BLOB_ACCOUNT_NAME}"
+      echo "${BLOB_KEY}"
+      echo "${BLOB_CONTAINER_NAME}"
+      az storage blob upload \
+        --account-name "${BLOB_ACCOUNT_NAME}" \
+        --account-key "${BLOB_KEY}" \
+        --container-name "${BLOB_CONTAINER_NAME}" \
+        --overwrite true \
+        --file results.csv \
+        --name $1-$testStartTime.csv
+
+      echo "Results have been pushed to: https://${BLOB_ACCOUNT_NAME}.blob.core.windows.net/${BLOB_CONTAINER_NAME}/$1.csv"
+    fi
+
+    mv /opt/apache-jmeter-5.5/bin/jmeter.log /results/jmeter.log
+    mv customConfig.properties /results/customConfig.properties
+    mv results.csv /results/results.csv
