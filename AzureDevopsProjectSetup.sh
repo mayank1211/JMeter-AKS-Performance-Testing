@@ -18,7 +18,7 @@ git init
 git add .
 git commit -m "Initial Performance Testing Platform Commit"
 git branch -M main
-git remote add origin https://$1@dev.azure.com/$1/Performance_Testing/_git/Performance_Testing
+git remote add origin git@ssh.dev.azure.com:v3/$1/Performance_Testing/Performance_Testing
 git push -u origin --all
 git pull
 
