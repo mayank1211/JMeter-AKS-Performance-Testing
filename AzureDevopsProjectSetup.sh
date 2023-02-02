@@ -17,7 +17,7 @@ az repos create --name "Performance_Testing"
 git init .
 git add --all
 git commit -m "Initial Performance Testing Platform Commit"
-git remote set-url https://dev.azure.com/$1/Performance_Testing/_git/Performance_Testing
+git remote set-url --add https://dev.azure.com/$1/Performance_Testing/_git/Performance_Testing
 git push origin main
 
 # # Create build pipeline for self-hosted agents
