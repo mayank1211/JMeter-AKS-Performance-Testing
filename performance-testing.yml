@@ -4,6 +4,15 @@ trigger: none
 pool:
   name: "Agents Pool AKS"
 
+variables:
+  - name: BLOB_STORAGE_NAME
+    default: "performancetestingblob"
+  - name: BLOB_STORAGE_CONTAINER_NAME
+    default: "reports"
+  # Added through azure build pipeline variables instead of hardcoded value
+  # - name: BLOB_STORAGE_KEY
+  #   default: ""
+
 parameters:
   - name: Hostname
     displayName: "Application domain URL (without http/https and www. in the url)"
@@ -210,7 +219,7 @@ jobs:
       kubectl cp PerformanceTests/$test_name $master_pod:/$test_name -n $(NAMESPACE)
 
       echo "##[section]Starting JMeter Test!"
-      kubectl exec -it $master_pod --request-timeout=0 -n $(NAMESPACE) -- /bin/bash /load_test $test_name
+      kubectl exec -it $master_pod --request-timeout=0 -n $(NAMESPACE) -- /bin/bash /load_test $test_name "$(BLOB_STORAGE_NAME)" "$(BLOB_STORAGE_KEY)" "$(BLOB_STORAGE_CONTAINER_NAME)"
 
       echo "##[section] Copying reports from $(NAMESPACE) namespace"
       kubectl cp $master_pod:/results '$(Build.SourcesDirectory)/LoadReports' -n $(NAMESPACE)

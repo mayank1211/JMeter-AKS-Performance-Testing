@@ -14,8 +14,15 @@ data:
       ||   HTML dashbord is created at the end of the run and can be seen in azure build pipeline  ||
       ===============================================================================================
     '
-    # Start jmeter test run 
-    # -X means exit the servers at the end of test - https://jmeter.apache.org/usermanual/get-started.html
+
+    : '
+      ==========================================
+      ||          $1 - JMX file name          ||
+      ||    $2 - Blob storage account name    ||
+      ||    $3 - Blob storage account key     ||
+      ||   $4 - Blob storage container name   ||
+      ==========================================
+    '
 
     testStartTime=$(date +"%T")
 
@@ -23,19 +30,19 @@ data:
       -GcustomConfig.properties -Dserver.rmi.ssl.disable=true -X \
       -R `getent ahostsv4 jmeter-workers-svc | cut -d' ' -f1 | sort -u | awk -v ORS=, '{print $1}' | sed 's/,$//'`
 
-    if [ ! -z "${BLOB_ACCOUNT_NAME}" ] && [ ! -z "${BLOB_KEY}"] && [ ! -z "${BLOB_CONTAINER_NAME}"]; then
+    if [ ! -z "$2" ] && [ ! -z "$3"] && [ ! -z "$4"]; then
       echo "${BLOB_ACCOUNT_NAME}"
       echo "${BLOB_KEY}"
       echo "${BLOB_CONTAINER_NAME}"
       az storage blob upload \
-        --account-name "${BLOB_ACCOUNT_NAME}" \
-        --account-key "${BLOB_KEY}" \
-        --container-name "${BLOB_CONTAINER_NAME}" \
+        --account-name "$2" \
+        --account-key "$3" \
+        --container-name "$4" \
         --overwrite true \
         --file results.csv \
         --name $1-$testStartTime.csv
 
-      echo "Results have been pushed to: https://${BLOB_ACCOUNT_NAME}.blob.core.windows.net/${BLOB_CONTAINER_NAME}/$1.csv"
+      echo "Results have been pushed to: https://$2.blob.core.windows.net/$4/$1.csv"
     fi
 
     mv /opt/apache-jmeter-5.5/bin/jmeter.log /results/jmeter.log
