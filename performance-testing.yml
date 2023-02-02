@@ -66,6 +66,8 @@ jobs:
       kubectlVersion: 'latest'
 
   - script: |
+      set -e
+
       if [ -z ${{ parameters.JMeterJmxFile }} ] || [ -z ${{ parameters.JMeterWorkers }} ];
       then
         echo "##vso[task.logissue type=error]Test script file was not found in PATH or no JMeterWorkers value found!"
@@ -92,11 +94,10 @@ jobs:
 
       # Authenticate with Container Registry
       export HELM_EXPERIMENTAL_OCI=1
-      # helm registry login performancetesting.azurecr.io \
-      #   --username $(ContainerRegistryUser) --password $(ContainerRegistryPassword)
+      helm registry login $(ContainerRegistryName).azurecr.io --username $(ContainerRegistryUser) --password $(ContainerRegistryPassword)
 
-      # # Download jmeter helm chart from azure container registry
-      # helm pull oci://performancetesting.azurecr.io/jmeter/jmeterhelm --version 1.0.0 --untar
+      # Download jmeter helm chart from azure container registry
+      helm pull oci://$(ContainerRegistryName).azurecr.io/jmeter/jmeterhelm --version 1.0.0 --untar
     displayName: 'Fetch Helm chart & Assign Variables'
 
   # Deploy the changes to the namespace - wait untill all pods are running with default timeout set to 10 minutes.

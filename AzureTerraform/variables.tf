@@ -54,11 +54,12 @@ variable "tags" {
   description = "A map of the tags to use for the resources that are deployed"
   type        = map(string)
   default = {
-    "service" : "Performance Testing Platform"
+    "service-product" : "Performance Testing Platform"
     "team" : "Solo"
     "environment" : "Development"
     "requested by" : "Mayank Patel"
     "product owner" : "Mayank Patel"
     "created by" : "Mayank Patel"
+    "created date" : "02 February 2023"
   }
 }
